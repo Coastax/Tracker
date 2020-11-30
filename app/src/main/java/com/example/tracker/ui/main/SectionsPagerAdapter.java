@@ -17,6 +17,7 @@ import com.example.tracker.R;
 public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
     MapsFragment MapsFragment = new MapsFragment();
+    SavedPathFragment SavedPathFragment = new SavedPathFragment();
 
     @StringRes
     private static final int[] TAB_TITLES = new int[]{R.string.tab_text_1, R.string.tab_text_2};
@@ -35,7 +36,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
             return MapsFragment;
         else
         // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1);
+            return SavedPathFragment;
     }
 
     @Nullable
