@@ -8,19 +8,21 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.tracker.R;
-import com.example.tracker.ui.main.dummy.DummyContent.DummyItem;
+import com.example.tracker.SavedPath;
+import com.example.tracker.TravelPath;
+
 
 import java.util.List;
 
 /**
- * {@link RecyclerView.Adapter} that can display a {@link DummyItem}.
+ * {@link RecyclerView.Adapter} that can display a {@link com.example.tracker.SavedPath}.
  * TODO: Replace the implementation with code for your data type.
  */
 public class MySavedPathRecyclerViewAdapter extends RecyclerView.Adapter<MySavedPathRecyclerViewAdapter.ViewHolder> {
 
-    private final List<DummyItem> mValues;
+    private final List<TravelPath> mValues;
 
-    public MySavedPathRecyclerViewAdapter(List<DummyItem> items) {
+    public MySavedPathRecyclerViewAdapter(List<TravelPath> items) {
         mValues = items;
     }
 
@@ -34,8 +36,8 @@ public class MySavedPathRecyclerViewAdapter extends RecyclerView.Adapter<MySaved
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         holder.mItem = mValues.get(position);
-        holder.mIdView.setText(mValues.get(position).id);
-        holder.mContentView.setText(mValues.get(position).content);
+        holder.mIdView.setText(mValues.get(position).getID());
+        holder.mContentView.setText(mValues.get(position).getSavedName());
     }
 
     @Override
@@ -47,7 +49,7 @@ public class MySavedPathRecyclerViewAdapter extends RecyclerView.Adapter<MySaved
         public final View mView;
         public final TextView mIdView;
         public final TextView mContentView;
-        public DummyItem mItem;
+        public TravelPath mItem;
 
         public ViewHolder(View view) {
             super(view);

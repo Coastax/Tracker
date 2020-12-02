@@ -6,9 +6,12 @@ import java.util.Vector;
 
 public class TravelPath {
 
-    private Vector<Location> locationList = new Vector<Location>();
-    private int size = 0;
-    private float travelledDistance = 0;
+    protected Vector<Location> locationList = new Vector<Location>();
+    protected int size = 0;
+    protected float travelledDistance = 0;
+    protected String savedName = "Saved Path";
+    protected int ID = 0;
+
 
     public float getTravelledDistance(){
         return this.travelledDistance;
@@ -19,6 +22,8 @@ public class TravelPath {
     public Vector<Location> getLocationList(){
         return this.locationList;
     }
+    public String getSavedName() {return this.savedName; }
+    public int getID() {return this.ID;}
 
     public void addLocation(Location location) {
         this.locationList.add(location);
@@ -45,6 +50,13 @@ public class TravelPath {
         this.travelledDistance = this.travelledDistance - delta;
     }
 
+    public void setID(int nID) {
+        this.ID = nID;
+    }
+
+    public void setSavedName(String nSavedName) {
+        this.savedName = nSavedName;
+    }
 
     public void saveCurrentPath(String filename){
 

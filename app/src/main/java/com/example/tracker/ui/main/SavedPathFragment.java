@@ -13,7 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.tracker.R;
-import com.example.tracker.ui.main.dummy.DummyContent;
+import com.example.tracker.SavedPath;
 
 /**
  * A fragment representing a list of Items.
@@ -65,7 +65,7 @@ public class SavedPathFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new MySavedPathRecyclerViewAdapter(DummyContent.ITEMS));
+            recyclerView.setAdapter(new MySavedPathRecyclerViewAdapter(SavedPath.ITEMS));
         }
         return view;
     }
