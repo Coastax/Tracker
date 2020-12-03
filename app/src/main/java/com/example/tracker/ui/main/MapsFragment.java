@@ -54,7 +54,6 @@ public class MapsFragment extends Fragment {
     LocationRequest mLocationRequest;
     Location mLastLocation;
     Location mNewLocation;
-    Marker mCurrLocationMarker;
     FusedLocationProviderClient mFusedLocationClient;
     TravelPath currentPath;
     FloatingActionButton startBtn;
@@ -116,6 +115,7 @@ public class MapsFragment extends Fragment {
                 if (recording) {
                     if (currentPath.getSize() == 0) {
                         currentPath.addLocation(location);
+                        redrawPolyLine();
                     }
                     else if (delta >= 1) {
                         currentPath.addLocation(location);
@@ -147,7 +147,7 @@ public class MapsFragment extends Fragment {
         startMaker.position(new LatLng(startPoint.getLatitude(), startPoint.getLongitude()));
         startMaker.title("Start");
         startMaker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-        mCurrLocationMarker = mGoogleMap.addMarker(startMaker);
+        mGoogleMap.addMarker(startMaker);
     }
 
     @Nullable
@@ -173,6 +173,7 @@ public class MapsFragment extends Fragment {
                 startBtn.getDrawable().mutate().setTint(ContextCompat.getColor(getContext(), R.color.red));
                 recording = true;
                 currentPath.clearLocation();
+                mGoogleMap.clear();
             }
             else {
                 Snackbar.make(view, "Recording Stopped", Snackbar.LENGTH_LONG)
@@ -184,7 +185,7 @@ public class MapsFragment extends Fragment {
                 endMaker.position(new LatLng(endPoint.getLatitude(), endPoint.getLongitude()));
                 endMaker.title("End");
                 endMaker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                mCurrLocationMarker = mGoogleMap.addMarker(endMaker);
+                mGoogleMap.addMarker(endMaker);
 
 
                 recording = false;
