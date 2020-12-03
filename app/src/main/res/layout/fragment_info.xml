@@ -12,14 +12,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="5pt"
-        android:layout_marginTop="20pt"
+        android:layout_marginTop="25pt"
         android:layout_marginRight="5pt"
 
         android:layout_marginBottom="5pt"
-        android:background="#B5B5B5"
+        android:background="#CCCCCC"
         android:fadingEdge="none"
         android:foregroundTint="#FF0000"
-        android:longClickable="true">
+        android:longClickable="true"
+        android:translationZ="5pt">
 
         <TableRow
             android:layout_width="match_parent"
