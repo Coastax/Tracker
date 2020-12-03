@@ -12,6 +12,7 @@ public class TravelPath implements Serializable {
     protected float travelledDistance = 0;
     protected String savedName = "Saved Path";
     protected int ID = 0;
+    protected float currentSpeed = 0;
 
 
     public float getTravelledDistance(){
