@@ -173,6 +173,7 @@ public class MapsFragment extends Fragment {
                 startBtn.getDrawable().mutate().setTint(ContextCompat.getColor(getContext(), R.color.red));
                 recording = true;
                 currentPath.clearLocation();
+                mGoogleMap.clear();
             }
             else {
                 Snackbar.make(view, "Recording Stopped", Snackbar.LENGTH_LONG)
