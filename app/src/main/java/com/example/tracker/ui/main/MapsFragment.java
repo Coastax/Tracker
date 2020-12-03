@@ -11,6 +11,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
@@ -23,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.example.tracker.MainActivity;
 import com.example.tracker.R;
 import com.example.tracker.TravelPath;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -34,11 +36,14 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.List;
 
@@ -52,6 +57,7 @@ public class MapsFragment extends Fragment {
     Marker mCurrLocationMarker;
     FusedLocationProviderClient mFusedLocationClient;
     TravelPath currentPath;
+    FloatingActionButton startBtn;
     boolean recording = false;
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
 
@@ -66,6 +72,8 @@ public class MapsFragment extends Fragment {
          * install it inside the SupportMapFragment. This method will only be triggered once the
          * user has installed Google Play services and returned to the app.
          */
+
+
         @Override
         public void onMapReady(GoogleMap googleMap) {
             mGoogleMap = googleMap;
@@ -101,30 +109,24 @@ public class MapsFragment extends Fragment {
                 Location location = locationList.get(locationList.size() - 1);
                 Log.i("MapsActivity", "Location: " + location.getLatitude() + " " + location.getLongitude());
                 mNewLocation = location;
-                if (mCurrLocationMarker != null) {
-                    mCurrLocationMarker.remove();
-                }
 
                 //Place current location marker
                 LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                 float delta = mNewLocation.distanceTo(mLastLocation);
-                if (delta >= 1) {
-                    currentPath.addLocation(location);
-                    //move map camera
-                    mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
-                    mLastLocation = mNewLocation;
+                if (recording) {
+                    if (currentPath.getSize() == 0) {
+                        currentPath.addLocation(location);
+                    }
+                    else if (delta >= 1) {
+                        currentPath.addLocation(location);
+                        //move map camera
+                        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
+                        mLastLocation = mNewLocation;
 
-                    redrawPolyLine();
-                    //Toast.makeText(getApplicationContext(), "Travelled distance: " + currentPath.getTravelledDistance(), Toast.LENGTH_SHORT).show();
+                        redrawPolyLine();
+                        //Toast.makeText(getApplicationContext(), "Travelled distance: " + currentPath.getTravelledDistance(), Toast.LENGTH_SHORT).show();
+                    }
                 }
-
-                /*
-                MarkerOptions markerOptions = new MarkerOptions();
-                markerOptions.position(latLng);
-                markerOptions.title("Current Position");
-                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-                mCurrLocationMarker = mGoogleMap.addMarker(markerOptions);
-                */
 
             }
         }
@@ -138,7 +140,14 @@ public class MapsFragment extends Fragment {
                     currentPath.getLocationList().get(i).getLongitude());
             options.add(point);
         }
-        Polyline line = mGoogleMap.addPolyline(options);
+        mGoogleMap.addPolyline(options);
+
+        MarkerOptions startMaker = new MarkerOptions();
+        Location startPoint = currentPath.getStartPoint();
+        startMaker.position(new LatLng(startPoint.getLatitude(), startPoint.getLongitude()));
+        startMaker.title("Start");
+        startMaker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+        mCurrLocationMarker = mGoogleMap.addMarker(startMaker);
     }
 
     @Nullable
@@ -153,6 +162,36 @@ public class MapsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        startBtn = getView().findViewById(R.id.startBtn);
+
+        startBtn.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            if (!recording) {
+                Snackbar.make(view, "Start Recording Path", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+                startBtn.getDrawable().mutate().setTint(ContextCompat.getColor(getContext(), R.color.red));
+                recording = true;
+                currentPath.clearLocation();
+            }
+            else {
+                Snackbar.make(view, "Recording Stopped", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+                startBtn.getDrawable().mutate().setTint(ContextCompat.getColor(getContext(), R.color.gray));
+                Location endPoint = currentPath.getEndPoint();
+
+                MarkerOptions endMaker = new MarkerOptions();
+                endMaker.position(new LatLng(endPoint.getLatitude(), endPoint.getLongitude()));
+                endMaker.title("End");
+                endMaker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                mCurrLocationMarker = mGoogleMap.addMarker(endMaker);
+
+
+                recording = false;
+            }
+        }
+
+        });
 
         mapFrag =
                 (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
