@@ -2,6 +2,7 @@ package com.example.tracker;
 
 import com.example.tracker.TravelPath;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,9 +12,8 @@ import java.util.Map;
  * Helper class for providing sample content for user interfaces created by
  * Android template wizards.
  * <p>
- * TODO: Replace all uses of this class before publishing your app.
  */
-public class SavedPath {
+public class SavedPath implements Serializable {
 
     /**
      * An array of TravelPath.
@@ -28,11 +28,17 @@ public class SavedPath {
     private static int COUNT = 0;
 
 
-    private static void addItem(TravelPath item) {
+    public static void addItem(TravelPath item) {
         ITEMS.add(item);
         ITEM_MAP.put(COUNT, item);
         item.setID(COUNT);
         COUNT++;
+    }
+
+    //TODO: read the files and load the saved paths
+    public void loadSavedPath(){
+
+
     }
 
     /*

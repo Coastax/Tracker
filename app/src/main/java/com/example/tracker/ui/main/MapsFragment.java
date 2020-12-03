@@ -52,6 +52,7 @@ public class MapsFragment extends Fragment {
     Marker mCurrLocationMarker;
     FusedLocationProviderClient mFusedLocationClient;
     TravelPath currentPath;
+    boolean recording = false;
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
 
     private OnMapReadyCallback callback = new OnMapReadyCallback() {
@@ -152,6 +153,7 @@ public class MapsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+
         mapFrag =
                 (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
         if (mapFrag != null) {
@@ -204,7 +206,7 @@ public class MapsFragment extends Fragment {
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+                                           String[] permissions, int[] grantResults) {
         switch (requestCode) {
             case MY_PERMISSIONS_REQUEST_LOCATION: {
                 // If request is cancelled, the result arrays are empty.

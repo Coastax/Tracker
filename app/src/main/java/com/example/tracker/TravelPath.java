@@ -2,9 +2,10 @@ package com.example.tracker;
 
 import android.location.Location;
 
+import java.io.Serializable;
 import java.util.Vector;
 
-public class TravelPath {
+public class TravelPath implements Serializable {
 
     protected Vector<Location> locationList = new Vector<Location>();
     protected int size = 0;
@@ -58,6 +59,7 @@ public class TravelPath {
         this.savedName = nSavedName;
     }
 
+    //TODO: save the path to a file
     public void saveCurrentPath(String filename){
 
 

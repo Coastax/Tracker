@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="bottom"
+    tools:context=".ui.main.InfoFragment"
+    android:layout_alignParentBottom="true">
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5pt"
+        android:layout_marginTop="5pt"
+        android:layout_marginRight="5pt"
+
+        android:layout_marginBottom="5pt"
+        android:background="#B5B5B5"
+        android:fadingEdge="none"
+        android:foregroundTint="#FF0000"
+        android:longClickable="true">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="5pt"
+            android:layout_marginTop="5pt"
+            android:baselineAligned="false">
+
+            <TextView
+                android:id="@+id/distanceLbl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/travelled_distance"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/speedLbl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="10pt"
+                android:text="@string/current_speed"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="5pt">
+
+            <TextView
+                android:id="@+id/distanceFld"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Travelled Distance"
+                android:textColor="#575757"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/speedFld"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:paddingHorizontal="10pt"
+                android:text="Current Speed"
+                android:textColor="#575757"
+                android:textSize="18sp" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:baselineAligned="false">
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="10dp" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="5pt"
+            android:baselineAligned="false">
+
+            <TextView
+                android:id="@+id/startTimeLbl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/start_time"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/stopTimeLbl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="10pt"
+                android:text="@string/stop_time"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="5pt"
+            android:layout_marginBottom="5pt"
+            android:baselineAligned="false">
+
+            <TextView
+                android:id="@+id/startTimeFld"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start Time"
+                android:textColor="#575757"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/stopTimeFld"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="10pt"
+                android:text="Stop Time"
+                android:textColor="#575757"
+                android:textSize="18sp" />
+        </TableRow>
+
+    </TableLayout>
+</RelativeLayout>
