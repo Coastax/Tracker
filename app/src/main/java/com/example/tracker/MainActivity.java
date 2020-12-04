@@ -2,6 +2,7 @@ package com.example.tracker;
 
 import android.os.Bundle;
 
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
@@ -12,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.example.tracker.ui.main.SectionsPagerAdapter;
 
@@ -34,6 +36,22 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+            }
+        });
+
+        // Create and initialize an action listener for extended fab of saving button
+        ExtendedFloatingActionButton mSaveBtn = findViewById(R.id.save_path);
+        mSaveBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                TravelPath mTravelPath = new TravelPath();
+//                mTravelPath.travelledDistance = ;
+
+                SavedPath mSavedPath = new SavedPath();
+                mSavedPath.addItem(mTravelPath);
+
+                Toast.makeText(MainActivity.this, "You have saved the related travelling information of current path", Toast.LENGTH_SHORT).show();
+
             }
         });
     }
