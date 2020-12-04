@@ -6,25 +6,23 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.example.tracker.MainActivity;
 import com.example.tracker.R;
 import com.example.tracker.TravelPath;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -38,30 +36,33 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+
 
 public class MapsFragment extends Fragment {
 
-    GoogleMap mGoogleMap;
-    SupportMapFragment mapFrag;
-    LocationRequest mLocationRequest;
-    Location mLastLocation;
-    Location mNewLocation;
-    FusedLocationProviderClient mFusedLocationClient;
-    TravelPath currentPath;
-    FloatingActionButton startBtn;
-    boolean recording = false;
+    private InfoViewModel mPageViewModel;
+    private GoogleMap mGoogleMap;
+    private SupportMapFragment mapFrag;
+    private LocationRequest mLocationRequest;
+    private Location mLastLocation;
+    private Location mNewLocation;
+    private FusedLocationProviderClient mFusedLocationClient;
+    private TravelPath currentPath;
+    private FloatingActionButton startBtn;
+    private boolean recording = false;
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+    DateFormat df = new SimpleDateFormat("MM/dd HH:mm");
 
     private OnMapReadyCallback callback = new OnMapReadyCallback() {
-
         /**
          * Manipulates the map once available.
          * This callback is triggered when the map is ready to be used.
@@ -71,13 +72,11 @@ public class MapsFragment extends Fragment {
          * install it inside the SupportMapFragment. This method will only be triggered once the
          * user has installed Google Play services and returned to the app.
          */
-
-
         @Override
         public void onMapReady(GoogleMap googleMap) {
             mGoogleMap = googleMap;
             mLocationRequest = new LocationRequest();
-            mLocationRequest.setInterval(2000); // two minute interval
+            mLocationRequest.setInterval(1000); // 1000ms
             mLocationRequest.setFastestInterval(1000);
             mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
@@ -106,13 +105,18 @@ public class MapsFragment extends Fragment {
             if (locationList.size() > 0) {
                 //The last location in the list is the newest
                 Location location = locationList.get(locationList.size() - 1);
-                Log.i("MapsActivity", "Location: " + location.getLatitude() + " " + location.getLongitude());
+                //Log.i("MapsActivity", "Location: " + location.getLatitude() + " " + location.getLongitude());
                 mNewLocation = location;
 
-                //Place current location marker
+
                 LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                 float delta = mNewLocation.distanceTo(mLastLocation);
                 if (recording) {
+                    currentPath.addLocation(location);
+                    mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
+                    mPageViewModel.setDisplayPath(currentPath);
+                    redrawPolyLine();
+                    /*
                     if (currentPath.getSize() == 0) {
                         currentPath.addLocation(location);
                         redrawPolyLine();
@@ -122,10 +126,14 @@ public class MapsFragment extends Fragment {
                         //move map camera
                         mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
                         mLastLocation = mNewLocation;
+                        mPageViewModel.setDisplayPath(currentPath);
 
                         redrawPolyLine();
-                        //Toast.makeText(getApplicationContext(), "Travelled distance: " + currentPath.getTravelledDistance(), Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getContext(), "Travelled distance: " + currentPath.getTravelledDistance(), Toast.LENGTH_SHORT).show();
+
                     }
+
+                     */
                 }
 
             }
@@ -134,6 +142,7 @@ public class MapsFragment extends Fragment {
 
     private void redrawPolyLine() {
         mGoogleMap.clear();
+
         PolylineOptions options = new PolylineOptions().width(10).color(Color.CYAN).geodesic(true);
         for (int i = 0; i < currentPath.getSize(); i++){
             LatLng point = new LatLng(currentPath.getLocationList().get(i).getLatitude(),
@@ -150,6 +159,13 @@ public class MapsFragment extends Fragment {
         mGoogleMap.addMarker(startMaker);
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        //mPageViewModel = ViewModelProviders.of(requireActivity()).get(InfoViewModel.class);
+        mPageViewModel = new ViewModelProvider(requireActivity()).get(InfoViewModel.class);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -161,7 +177,6 @@ public class MapsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         startBtn = getView().findViewById(R.id.startBtn);
 
         startBtn.setOnClickListener(new View.OnClickListener() {
@@ -172,21 +187,29 @@ public class MapsFragment extends Fragment {
                         .setAction("Action", null).show();
                 startBtn.getDrawable().mutate().setTint(ContextCompat.getColor(getContext(), R.color.red));
                 recording = true;
-                currentPath.clearLocation();
+                currentPath.clearPath();
+                //String time = df.format(new Date());
+                //Toast.makeText(getContext(),time,Toast.LENGTH_LONG).show();
+                currentPath.setStartTime(df.format(new Date()));
+                mPageViewModel.setDisplayPath(currentPath);
                 mGoogleMap.clear();
+
             }
             else {
                 Snackbar.make(view, "Recording Stopped", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 startBtn.getDrawable().mutate().setTint(ContextCompat.getColor(getContext(), R.color.gray));
+                currentPath.setEndTime(df.format(new Date()));
                 Location endPoint = currentPath.getEndPoint();
+                mPageViewModel.setDisplayPath(currentPath);
 
-                MarkerOptions endMaker = new MarkerOptions();
-                endMaker.position(new LatLng(endPoint.getLatitude(), endPoint.getLongitude()));
-                endMaker.title("End");
-                endMaker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                mGoogleMap.addMarker(endMaker);
-
+                if(endPoint != null) {
+                    MarkerOptions endMaker = new MarkerOptions();
+                    endMaker.position(new LatLng(endPoint.getLatitude(), endPoint.getLongitude()));
+                    endMaker.title("End");
+                    endMaker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                    mGoogleMap.addMarker(endMaker);
+                }
 
                 recording = false;
             }
