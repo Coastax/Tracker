@@ -56,9 +56,9 @@
                 android:id="@+id/distanceFld"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Travelled Distance"
+                android:text="@string/defaultDistanceDisplay"
                 android:textColor="#575757"
-                android:textSize="18sp" />
+                android:textSize="24sp" />
 
             <TextView
                 android:id="@+id/speedFld"
@@ -66,9 +66,9 @@
                 android:layout_height="wrap_content"
                 android:baselineAligned="false"
                 android:paddingHorizontal="10pt"
-                android:text="Current Speed"
+                android:text="@string/defaultDisplaySpeed"
                 android:textColor="#575757"
-                android:textSize="18sp" />
+                android:textSize="24sp" />
         </TableRow>
 
         <TableRow
@@ -116,8 +116,8 @@
                 android:id="@+id/startTimeFld"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Start Time"
                 android:textColor="#575757"
+                android:text="@string/defaultDisplayTime"
                 android:textSize="18sp" />
 
             <TextView
@@ -125,8 +125,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="10pt"
-                android:text="Stop Time"
                 android:textColor="#575757"
+                android:text="@string/defaultDisplayTime"
                 android:textSize="18sp" />
         </TableRow>
 
