@@ -1,9 +1,12 @@
 package com.example.tracker;
 
+import android.content.Context;
 import android.location.Location;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.Serializable;
 import java.util.Vector;
 
@@ -15,6 +18,7 @@ public class TravelPath implements Serializable {
     protected String savedName = "Saved Path";
     protected int ID = 0;
     protected float currentSpeed = 0;
+    private Context mContext;
 
 
     public float getTravelledDistance(){
@@ -66,10 +70,10 @@ public class TravelPath implements Serializable {
         this.savedName = nSavedName;
     }
 
-    //TODO: save the path to a file
-    public void saveCurrentPath(String filename){
-
-
+    public void saveCurrentPath(String filename) throws Exception {
+        FileOutputStream out = mContext.openFileOutput(filename, mContext.MODE_PRIVATE);
+        out.write(filename.getBytes());
+        out.close();
     }
 
     public Location getStartPoint() {
