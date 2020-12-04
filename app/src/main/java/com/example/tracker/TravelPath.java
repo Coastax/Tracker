@@ -17,34 +17,82 @@ public class TravelPath implements Serializable {
     protected float travelledDistance = 0;
     protected String savedName = "Saved Path";
     protected int ID = 0;
-    protected float currentSpeed = 0;
+    protected float speed = 0;
+    protected String startTime = "--";
+    private  String  endTime = "--";
     private Context mContext;
 
 
     public float getTravelledDistance(){
         return this.travelledDistance;
     }
+
     public float getSize(){
         return this.size;
     }
+
     public Vector<Location> getLocationList(){
         return this.locationList;
     }
-    public String getSavedName() {return this.savedName; }
-    public int getID() {return this.ID;}
+
+    public String getSavedName() {
+        return this.savedName;
+    }
+
+    public int getID() {
+        return this.ID;
+    }
+
+    public float getSpeed() {
+        return this.speed;
+    }
+
+    public String getStartTime(){
+        return this.startTime;
+    }
+
+    public String getEndTime(){
+        return this.endTime;
+    }
+
+    public Location getStartPoint() {
+        return this.locationList.get(0);
+    }
+
+    public Location getEndPoint() {
+        if(this.size != 0) {
+            return this.locationList.get(this.size - 1);
+        }
+        else
+            return null;
+    }
 
     public void addLocation(Location location) {
-        this.locationList.add(location);
-        this.incrementSize(1);
-        if(this.size > 1){
-            float delta = location.distanceTo(locationList.get(this.size - 2));
-            this.incrementTravelledDistance(delta);
+        if (this.size == 0) {
+            this.locationList.add(location);
+            this.incrementSize(1);
+        }
+
+        else if(this.size > 0) {
+            //LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            float delta = location.distanceTo(locationList.get(this.size - 1));
+            if (delta >= 0.5){
+                this.locationList.add(location);
+                this.incrementSize(1);
+                this.incrementTravelledDistance(delta);
+                this.speed = delta / 1;
+            }
+            else
+                this.speed = 0;
         }
     }
 
-    public void clearLocation(){
+    public void clearPath(){
         this.locationList.clear();
+        this.travelledDistance = 0;
         this.size = 0;
+        this.startTime = "--";
+        this.endTime = "--";
     }
     public void incrementSize(int amount) {
         this.size = this.size + amount;
@@ -82,5 +130,17 @@ public class TravelPath implements Serializable {
 
     public Location getEndPoint() {
         return this.locationList.get(this.size-1);
+    public void setEndTime(String endTime) {
+        this.endTime = endTime;
+    }
+
+    public void setStartTime(String startTime) {
+        this.startTime = startTime;
+    }
+
+    //TODO: save the path to a file
+    public void saveCurrentPath(String filename){
+
+
     }
 }
