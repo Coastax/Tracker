@@ -30,7 +30,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.main.NestedFragment$MainActivity"
             android:label="@string/app_name"
             android:theme="@style/Theme.Tracker.NoActionBar">
             <intent-filter>

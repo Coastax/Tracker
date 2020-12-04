@@ -16,8 +16,9 @@ import com.example.tracker.R;
  */
 public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
-    MapsFragment MapsFragment = new MapsFragment();
+    NestedFragment NestedFragment = new NestedFragment();
     SavedPathFragment SavedPathFragment = new SavedPathFragment();
+    MapsFragment MapsFragment = new MapsFragment();
 
     @StringRes
     private static final int[] TAB_TITLES = new int[]{R.string.tab_text_1, R.string.tab_text_2};
@@ -33,10 +34,12 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         // getItem is called to instantiate the fragment for the given page.
         if (position == 0)
-            return MapsFragment;
+            return NestedFragment;
+            //return MapsFragment;
         else
         // Return a PlaceholderFragment (defined as a static inner class below).
             return SavedPathFragment;
+
     }
 
     @Nullable
