@@ -12,6 +12,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
@@ -21,6 +22,7 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.tracker.R;
@@ -38,6 +40,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -57,9 +60,11 @@ public class MapsFragment extends Fragment {
     private Location mNewLocation;
     private FusedLocationProviderClient mFusedLocationClient;
     private TravelPath currentPath;
-    private FloatingActionButton startBtn;
+    private ExtendedFloatingActionButton startBtn;
+    private FloatingActionButton saveBtn;
     private boolean recording = false;
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+    private String m_Text = "";
     DateFormat df = new SimpleDateFormat("MM/dd HH:mm");
 
     private OnMapReadyCallback callback = new OnMapReadyCallback() {
@@ -116,24 +121,6 @@ public class MapsFragment extends Fragment {
                     mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
                     mPageViewModel.setDisplayPath(currentPath);
                     redrawPolyLine();
-                    /*
-                    if (currentPath.getSize() == 0) {
-                        currentPath.addLocation(location);
-                        redrawPolyLine();
-                    }
-                    else if (delta >= 1) {
-                        currentPath.addLocation(location);
-                        //move map camera
-                        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
-                        mLastLocation = mNewLocation;
-                        mPageViewModel.setDisplayPath(currentPath);
-
-                        redrawPolyLine();
-                        //Toast.makeText(getContext(), "Travelled distance: " + currentPath.getTravelledDistance(), Toast.LENGTH_SHORT).show();
-
-                    }
-
-                     */
                 }
 
             }
@@ -178,6 +165,7 @@ public class MapsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         startBtn = getView().findViewById(R.id.startBtn);
+        saveBtn = getView().findViewById(R.id.saveBtn);
 
         startBtn.setOnClickListener(new View.OnClickListener() {
         @Override
@@ -185,7 +173,11 @@ public class MapsFragment extends Fragment {
             if (!recording) {
                 Snackbar.make(view, "Start Recording Path", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
-                startBtn.getDrawable().mutate().setTint(ContextCompat.getColor(getContext(), R.color.red));
+                //startBtn.getDrawable().mutate().setTint(ContextCompat.getColor(getContext(), R.color.red));
+                startBtn.setText("  STOP");
+                startBtn.setTextColor(Color.parseColor("#FFFFFFFF"));
+                startBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#C62828")));
+                saveBtn.setVisibility(View.INVISIBLE);
                 recording = true;
                 currentPath.clearPath();
                 //String time = df.format(new Date());
@@ -198,7 +190,11 @@ public class MapsFragment extends Fragment {
             else {
                 Snackbar.make(view, "Recording Stopped", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
-                startBtn.getDrawable().mutate().setTint(ContextCompat.getColor(getContext(), R.color.gray));
+                //startBtn.getDrawable().mutate().setTint(ContextCompat.getColor(getContext(), R.color.gray));
+                startBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFFFFFFF")));
+                startBtn.setText("  START");
+                startBtn.setTextColor(Color.parseColor("#FF000000"));
+                saveBtn.setVisibility(View.VISIBLE);
                 currentPath.setEndTime(df.format(new Date()));
                 Location endPoint = currentPath.getEndPoint();
                 mPageViewModel.setDisplayPath(currentPath);
@@ -215,6 +211,37 @@ public class MapsFragment extends Fragment {
             }
         }
 
+        });
+
+        saveBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                builder.setTitle("Enter the path name");
+                // I'm using fragment here so I'm using getView() to provide ViewGroup
+                // but you can provide here any other instance of ViewGroup from your Fragment / Activity
+                View viewInflated = LayoutInflater.from(getContext()).inflate(R.layout.dialog_input_name, (ViewGroup) getView(), false);
+                // Set up the input
+                final EditText input = (EditText) viewInflated.findViewById(R.id.input);
+                builder.setView(viewInflated);
+
+                // Set up the buttons
+                builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        m_Text = input.getText().toString();
+                    }
+                });
+                builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                builder.show();
+            }
         });
 
         mapFrag =

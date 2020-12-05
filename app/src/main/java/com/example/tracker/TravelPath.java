@@ -76,14 +76,12 @@ public class TravelPath implements Serializable {
         else if(this.size > 0) {
             //LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
             float delta = location.distanceTo(locationList.get(this.size - 1));
-            if (delta >= 0.5){
+            if (delta >= 0.1){
                 this.locationList.add(location);
                 this.incrementSize(1);
                 this.incrementTravelledDistance(delta);
-                this.speed = delta / 1;
             }
-            else
-                this.speed = 0;
+            this.speed = delta / 1;
         }
     }
 
@@ -93,6 +91,7 @@ public class TravelPath implements Serializable {
         this.size = 0;
         this.startTime = "--";
         this.endTime = "--";
+        this.speed = 0;
     }
     public void incrementSize(int amount) {
         this.size = this.size + amount;
@@ -109,6 +108,8 @@ public class TravelPath implements Serializable {
     public void decrementTravelledDistance(float delta) {
         this.travelledDistance = this.travelledDistance - delta;
     }
+
+    public void setSpeed(float nSpeed) {this.speed = nSpeed;}
 
     public void setID(int nID) {
         this.ID = nID;
