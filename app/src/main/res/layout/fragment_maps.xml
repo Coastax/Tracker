@@ -2,24 +2,50 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/coordinatorLayout">
+    android:visibility="visible"
+    tools:visibility="visible">
 
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/startBtn"
+        android:id="@+id/saveBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|start"
         android:layout_margin="@dimen/fab_margin"
         android:clickable="true"
-        android:src="@mipmap/record"
+        android:src="@android:drawable/ic_menu_save"
+        android:visibility="invisible"
         app:backgroundTint="@color/white"
         app:fabSize="normal"
-        app:tint="@color/gray" />
+        app:tint="@color/black"
+        tools:visibility="visible" />
 
-    <fragment
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/startBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center"
+        android:layout_margin="@dimen/fab_margin"
+        android:clickable="true"
+        android:text="  START"
+        android:textAlignment="center"
+        android:textStyle="bold"
+        app:backgroundTint="@color/white" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/shareBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="@dimen/fab_margin"
+        android:tint="@color/black"
+        app:backgroundTint="@color/white"
+        app:srcCompat="@android:drawable/ic_menu_share" />
+
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/map"
         class="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="wrap_content"
