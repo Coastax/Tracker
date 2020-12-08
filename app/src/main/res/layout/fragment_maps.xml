@@ -45,6 +45,20 @@
         app:backgroundTint="@color/white"
         app:srcCompat="@android:drawable/ic_menu_share" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/clearBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|top"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="12dp"
+        android:tint="@color/black"
+        android:visibility="invisible"
+        app:backgroundTint="@color/white"
+        app:fabSize="mini"
+        app:srcCompat="@android:drawable/ic_menu_close_clear_cancel" />
+
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/map"
         class="com.google.android.gms.maps.SupportMapFragment"

@@ -2,36 +2,51 @@ package com.example.tracker;
 
 import android.content.Context;
 import android.location.Location;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Vector;
 
-public class TravelPath implements Serializable {
+import static java.lang.String.valueOf;
 
-    protected Vector<Location> locationList = new Vector<Location>();
+public class TravelPath implements Serializable, Parcelable {
+
+    protected ArrayList<Location> locationList = new ArrayList<Location>();
     protected int size = 0;
     protected float travelledDistance = 0;
     protected String savedName = "Saved Path";
-    protected int ID = 0;
+    protected boolean ended = false;
+
     protected float speed = 0;
     protected String startTime = "--";
-    private  String  endTime = "--";
-    private Context mContext;
+    protected String endTime = "--";
+
+    protected float elapsedTime = 0;
+
+    protected Location startPoint = null;
+    protected Location endPoint = null;
 
 
     public float getTravelledDistance(){
         return this.travelledDistance;
     }
 
-    public float getSize(){
+    public int getSize(){
         return this.size;
     }
 
-    public Vector<Location> getLocationList(){
+    public ArrayList<Location> getLocationList(){
         return this.locationList;
     }
 
@@ -39,13 +54,11 @@ public class TravelPath implements Serializable {
         return this.savedName;
     }
 
-    public int getID() {
-        return this.ID;
-    }
-
     public float getSpeed() {
         return this.speed;
     }
+
+    public boolean ended(){return this.ended; }
 
     public String getStartTime(){
         return this.startTime;
@@ -56,20 +69,17 @@ public class TravelPath implements Serializable {
     }
 
     public Location getStartPoint() {
-        return this.locationList.get(0);
+        return this.startPoint;
     }
 
     public Location getEndPoint() {
-        if(this.size != 0) {
-            return this.locationList.get(this.size - 1);
-        }
-        else
-            return null;
+        return this.endPoint;
     }
 
     public void addLocation(Location location) {
         if (this.size == 0) {
             this.locationList.add(location);
+            this.startPoint = location;
             this.incrementSize(1);
         }
 
@@ -87,10 +97,15 @@ public class TravelPath implements Serializable {
 
     public void clearPath(){
         this.locationList.clear();
+        this.startPoint = null;
+        this.endPoint = null;
+        this.ended = false;
         this.travelledDistance = 0;
         this.size = 0;
         this.startTime = "--";
         this.endTime = "--";
+        this.savedName = "Saved Path";
+        this.elapsedTime = 0;
         this.speed = 0;
     }
     public void incrementSize(int amount) {
@@ -109,20 +124,40 @@ public class TravelPath implements Serializable {
         this.travelledDistance = this.travelledDistance - delta;
     }
 
-    public void setSpeed(float nSpeed) {this.speed = nSpeed;}
+    private void setSpeed() {
+        if (elapsedTime == 0)
+            this.speed = this.getTravelledDistance();
+        else
+            this.speed = this.getTravelledDistance()/this.elapsedTime;
+    }
 
-    public void setID(int nID) {
-        this.ID = nID;
+    public void setStartPoint(Location startPoint) {
+        this.startPoint = startPoint;
+    }
+
+    public void setEndPoint() {
+        this.ended = true;
+        if(this.size < 1)
+            this.endPoint = this.startPoint;
+        else
+            this.endPoint = this.locationList.get(this.size-1);
+        this.setElapsedTime();
+    }
+
+    private void setElapsedTime(){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd HH:mm:ss");
+        try {
+            Date start = simpleDateFormat.parse(this.getStartTime());
+            Date end = simpleDateFormat.parse(this.getEndTime());
+            this.elapsedTime = (end.getTime() - start.getTime())/1000;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        this.setSpeed();
     }
 
     public void setSavedName(String nSavedName) {
         this.savedName = nSavedName;
-    }
-
-    public void saveCurrentPath(String filename) throws Exception {
-        FileOutputStream out = mContext.openFileOutput(filename, mContext.MODE_PRIVATE);
-        out.write(filename.getBytes());
-        out.close();
     }
 
     public void setEndTime(String endTime) {
@@ -133,4 +168,47 @@ public class TravelPath implements Serializable {
         this.startTime = startTime;
     }
 
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeTypedList(this.locationList);
+        dest.writeInt(this.size);
+        dest.writeFloat(this.travelledDistance);
+        dest.writeString(this.savedName);
+        dest.writeFloat(this.speed);
+        dest.writeString(this.startTime);
+        dest.writeString(this.endTime);
+        //dest.writeParcelable(this.mContext, flags);
+    }
+
+    public TravelPath() {
+    }
+
+    protected TravelPath(Parcel in) {
+        this.locationList = in.createTypedArrayList(Location.CREATOR);
+        this.size = in.readInt();
+        this.travelledDistance = in.readFloat();
+        this.savedName = in.readString();
+        this.speed = in.readFloat();
+        this.startTime = in.readString();
+        this.endTime = in.readString();
+        //this.mContext = in.readParcelable(Context.class.getClassLoader());
+    }
+
+    public static final Parcelable.Creator<TravelPath> CREATOR = new Parcelable.Creator<TravelPath>() {
+        @Override
+        public TravelPath createFromParcel(Parcel source) {
+            return new TravelPath(source);
+        }
+
+        @Override
+        public TravelPath[] newArray(int size) {
+            return new TravelPath[size];
+        }
+    };
 }

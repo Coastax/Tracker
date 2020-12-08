@@ -1,19 +1,22 @@
 package com.example.tracker;
 
+import android.content.Context;
+import android.util.Log;
+
 import com.example.tracker.TravelPath;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Helper class for providing sample content for user interfaces created by
- * Android template wizards.
- * <p>
- */
-public class SavedPath implements Serializable {
+public class SavedPath {
 
     /**
      * An array of TravelPath.
@@ -27,29 +30,48 @@ public class SavedPath implements Serializable {
 
     private static int COUNT = 0;
 
+    private static Context context;
+
 
     public static void addItem(TravelPath item) {
         ITEMS.add(item);
         ITEM_MAP.put(COUNT, item);
-        item.setID(COUNT);
-        COUNT++;
+    }
+    public static void removeItem(int pos){
+        ITEMS.remove(pos);
+        ITEM_MAP.remove(pos);
     }
 
     //TODO: read the files and load the saved paths
-    public void loadSavedPath(){
+    public static void loadSavedPath(){
 
+        String ret = "";
 
-    }
+        try {
+            InputStream inputStream = context.openFileInput("*.js");
 
-    /*
-    private static String makeDetails(int position) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Details about Item: ").append(position);
-        for (int i = 0; i < position; i++) {
-            builder.append("\nMore details information here.");
+            if ( inputStream != null ) {
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                String receiveString = "";
+                StringBuilder stringBuilder = new StringBuilder();
+
+                while ( (receiveString = bufferedReader.readLine()) != null ) {
+                    stringBuilder.append(receiveString);
+                }
+
+                inputStream.close();
+                ret = stringBuilder.toString();
+            }
         }
-        return builder.toString();
+        catch (FileNotFoundException e) {
+            Log.e("login activity", "File not found: " + e.toString());
+        }
+        catch (IOException e) {
+            Log.e("login activity", "Can not read file: " + e.toString());
+        }
+
+
     }
-     */
 
 }
