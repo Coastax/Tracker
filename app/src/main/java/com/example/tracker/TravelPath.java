@@ -26,6 +26,7 @@ public class TravelPath implements Serializable, Parcelable {
     protected int size = 0;
     protected float travelledDistance = 0;
     protected String savedName = "Saved Path";
+    protected String savedFileName = "Saved Path_Timestamp";
     protected boolean ended = false;
 
     protected float speed = 0;
@@ -53,6 +54,8 @@ public class TravelPath implements Serializable, Parcelable {
     public String getSavedName() {
         return this.savedName;
     }
+
+    public String getSavedFileName() {return this.savedFileName; }
 
     public float getSpeed() {
         return this.speed;
@@ -86,12 +89,14 @@ public class TravelPath implements Serializable, Parcelable {
         else if(this.size > 0) {
             //LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
             float delta = location.distanceTo(locationList.get(this.size - 1));
-            if (delta >= 0.1){
+            if (delta >= 0.5){
                 this.locationList.add(location);
                 this.incrementSize(1);
                 this.incrementTravelledDistance(delta);
+                this.speed = delta * 2;
             }
-            this.speed = delta / 1;
+            else
+                this.speed = 0;
         }
     }
 
@@ -105,6 +110,7 @@ public class TravelPath implements Serializable, Parcelable {
         this.startTime = "--";
         this.endTime = "--";
         this.savedName = "Saved Path";
+        this.savedFileName = "Saved Path_Timestamp";
         this.elapsedTime = 0;
         this.speed = 0;
     }
@@ -158,6 +164,10 @@ public class TravelPath implements Serializable, Parcelable {
 
     public void setSavedName(String nSavedName) {
         this.savedName = nSavedName;
+    }
+
+    public void setSavedFileName(String savedFileName) {
+        this.savedFileName = savedFileName;
     }
 
     public void setEndTime(String endTime) {
