@@ -66,6 +66,8 @@ public class SavedPathFragment extends Fragment {
         if (getArguments() != null) {
             mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
         }
+        SavedPath.setContext(getActivity());
+        SavedPath.loadSavedPath();
     }
 
     @Override

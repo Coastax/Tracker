@@ -17,6 +17,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -85,11 +86,13 @@ public class MapsFragment extends Fragment {
     private ExtendedFloatingActionButton startBtn;
     private FloatingActionButton saveBtn;
     private FloatingActionButton clearBtn;
+    private FloatingActionButton shareBtn;
     private boolean recording = false;
     private boolean displaying = false;
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     private String m_Text = "";
     DateFormat df = new SimpleDateFormat("MM/dd HH:mm:ss");
+    DateFormat timeStampFormat = new SimpleDateFormat("_yyyy_MM_dd_HH_mm_ss");
 
     private OnMapReadyCallback callback = new OnMapReadyCallback() {
         /**
@@ -105,7 +108,7 @@ public class MapsFragment extends Fragment {
         public void onMapReady(GoogleMap googleMap) {
             mGoogleMap = googleMap;
             mLocationRequest = new LocationRequest();
-            mLocationRequest.setInterval(1000); // 1000ms
+            mLocationRequest.setInterval(500); // 0.5s
             mLocationRequest.setFastestInterval(1000);
             mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
@@ -181,13 +184,15 @@ public class MapsFragment extends Fragment {
         startBtn = getView().findViewById(R.id.startBtn);
         saveBtn = getView().findViewById(R.id.saveBtn);
         clearBtn = getView().findViewById(R.id.clearBtn);
+        shareBtn = getView().findViewById(R.id.shareBtn);
 
         startBtn.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View view) {
             if (!recording) {
                 mGoogleMap.clear();
-                currentPath.clearPath();
+                //currentPath.clearPath();
+                currentPath = new TravelPath();
                 Snackbar.make(view, "Start Recording Path", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 //startBtn.getDrawable().mutate().setTint(ContextCompat.getColor(getContext(), R.color.red));
@@ -196,11 +201,13 @@ public class MapsFragment extends Fragment {
                 startBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#C62828")));
                 saveBtn.setVisibility(View.INVISIBLE);
                 clearBtn.setVisibility(View.INVISIBLE);
+                shareBtn.setVisibility(View.INVISIBLE);
                 recording = true;
                 //String time = df.format(new Date());
                 //Toast.makeText(getContext(),time,Toast.LENGTH_LONG).show();
                 currentPath.setStartTime(df.format(new Date()));
-                mPageViewModel.setDisplayPath(currentPath);
+                if(mNewLocation != null)
+                    currentPath.addLocation(mNewLocation);
 
 
             } else {
@@ -213,11 +220,12 @@ public class MapsFragment extends Fragment {
                 startBtn.setText("  START");
                 startBtn.setTextColor(Color.parseColor("#FF000000"));
                 saveBtn.setVisibility(View.VISIBLE);
+                shareBtn.setVisibility(View.VISIBLE);
                 currentPath.setEndTime(df.format(new Date()));
                 currentPath.setEndPoint();
-                mPageViewModel.setDisplayPath(currentPath);
-                redrawPolyLine(currentPath);
             }
+            mPageViewModel.setDisplayPath(currentPath);
+            redrawPolyLine(currentPath);
         }
 
         });
@@ -231,7 +239,6 @@ public class MapsFragment extends Fragment {
                 // Set up the input
                 final EditText input = viewInflated.findViewById(R.id.input);
                 builder.setView(viewInflated);
-
                 // Set up the buttons
                 builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
@@ -246,7 +253,6 @@ public class MapsFragment extends Fragment {
                         //savedPathFragment.setArguments(bundle);
                         getParentFragmentManager().setFragmentResult("save", bundle);
                         EventBus.getDefault().post(new SavePathEvent(currentPath));
-                        currentPath = new TravelPath();
                         saveBtn.setVisibility(View.INVISIBLE);
                         dialog.dismiss();
                     }
@@ -274,18 +280,48 @@ public class MapsFragment extends Fragment {
                     if(!recording){
                         if(currentPath.ended()){
                             saveBtn.setVisibility(View.VISIBLE);
+                            shareBtn.setVisibility(View.VISIBLE);
                             redrawPolyLine(currentPath);
                         }
+                        else
+                            shareBtn.setVisibility(View.INVISIBLE);
                     }
-                    else
+                    else {
                         redrawPolyLine(currentPath);
+                        shareBtn.setVisibility(View.INVISIBLE);
+                    }
                 }
                 else{
                     if(!recording && currentPath.ended()){
                         currentPath.clearPath();
+                        saveBtn.setVisibility(View.INVISIBLE);
+                        shareBtn.setVisibility(View.INVISIBLE);
                     }
                 }
                 mPageViewModel.setDisplayPath(currentPath);
+            }
+        });
+
+        shareBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String message;
+                if(displaying) {
+                    message = "I have travelled for " + displayPath.getTravelledDistance() + "m!";
+                }
+                else{
+                    message = "I have travelled for " + currentPath.getTravelledDistance() + "m!";
+                }
+                try {
+
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setType("vnd.android-dir/mms-sms");
+                    intent.putExtra("sms_body", message);
+                    intent.setData(Uri.parse("sms:"));
+                    startActivity(intent);
+                } catch (android.content.ActivityNotFoundException e) {
+                    Log.d("Error" , "Error");
+                }
             }
         });
 
@@ -372,16 +408,21 @@ public class MapsFragment extends Fragment {
         Gson gson = new Gson();
         String json = gson.toJson(currentPath);
         Context context = getActivity();
-/*
-        String path = Environment.getInternalStorageDirectory().getAbsolutePath() + "/SavedPath/";
+
+        String timeStamp = timeStampFormat.format(new Date());
+        currentPath.setSavedFileName(currentPath.getSavedName() + timeStamp + ".json");
+
+        String path = context.getFilesDir() + "/SavedPath/";
+        Log.i("PATH", path);
         File dir = new File(path);
         if (!dir.exists()) {
             dir.mkdirs();
+            //Toast.makeText(getActivity().getBaseContext(), "Directory DOE, making one", Toast.LENGTH_LONG).show();
         }
         try {
             Writer output = null;
-            File file = new File(path + currentPath.getSavedName() + ".json");
-
+            File file = new File(dir.getAbsolutePath() + "/" + currentPath.getSavedFileName());
+            //Log.i("FULL PATH", dir.getAbsolutePath() + "/" + currentPath.getSavedName() + timeStamp+ ".json");
 
             output = new BufferedWriter(new FileWriter(file.getAbsoluteFile()));
             output.write(json);
@@ -390,15 +431,6 @@ public class MapsFragment extends Fragment {
 
         } catch (Exception e) {
             Toast.makeText(getActivity().getBaseContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-        }
- */
-        try {
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(currentPath.getSavedName() + ".js", Context.MODE_PRIVATE));
-            outputStreamWriter.write(json);
-            outputStreamWriter.close();
-        }
-        catch (IOException e) {
-            Log.e("Exception", "File write failed: " + e.toString());
         }
     }
 
@@ -446,6 +478,7 @@ public class MapsFragment extends Fragment {
         startBtn.setVisibility(View.INVISIBLE);
         saveBtn.setVisibility(View.INVISIBLE);
         clearBtn.setVisibility(View.VISIBLE);
+        shareBtn.setVisibility(View.VISIBLE);
         LatLng latLng = new LatLng(displayPath.getStartPoint().getLatitude(), displayPath.getStartPoint().getLongitude());
         mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,16));
         //adapter.notifyDataSetChanged();
