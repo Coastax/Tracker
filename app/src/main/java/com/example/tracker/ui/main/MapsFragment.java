@@ -11,21 +11,27 @@ import androidx.lifecycle.ViewModelProvider;
 import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.example.tracker.DisplayPathEvent;
 import com.example.tracker.R;
+import com.example.tracker.SavePathEvent;
 import com.example.tracker.TravelPath;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -43,11 +49,27 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.gson.Gson;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+
+import static java.lang.String.valueOf;
 
 
 public class MapsFragment extends Fragment {
@@ -59,13 +81,18 @@ public class MapsFragment extends Fragment {
     private Location mLastLocation;
     private Location mNewLocation;
     private FusedLocationProviderClient mFusedLocationClient;
-    private TravelPath currentPath;
+    private TravelPath currentPath = new TravelPath();
+    private TravelPath displayPath;
     private ExtendedFloatingActionButton startBtn;
     private FloatingActionButton saveBtn;
+    private FloatingActionButton clearBtn;
+    private FloatingActionButton shareBtn;
     private boolean recording = false;
+    private boolean displaying = false;
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     private String m_Text = "";
-    DateFormat df = new SimpleDateFormat("MM/dd HH:mm");
+    DateFormat df = new SimpleDateFormat("MM/dd HH:mm:ss");
+    DateFormat timeStampFormat = new SimpleDateFormat("_yyyy_MM_dd_HH_mm_ss");
 
     private OnMapReadyCallback callback = new OnMapReadyCallback() {
         /**
@@ -81,7 +108,7 @@ public class MapsFragment extends Fragment {
         public void onMapReady(GoogleMap googleMap) {
             mGoogleMap = googleMap;
             mLocationRequest = new LocationRequest();
-            mLocationRequest.setInterval(1000); // 1000ms
+            mLocationRequest.setInterval(500); // 0.5s
             mLocationRequest.setFastestInterval(1000);
             mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
@@ -114,43 +141,33 @@ public class MapsFragment extends Fragment {
                 mNewLocation = location;
 
 
-                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                 float delta = mNewLocation.distanceTo(mLastLocation);
                 if (recording) {
+                    LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                     currentPath.addLocation(location);
-                    mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
-                    mPageViewModel.setDisplayPath(currentPath);
-                    redrawPolyLine();
+                    if(!displaying) {
+                        mPageViewModel.setDisplayPath(currentPath);
+                        redrawPolyLine(currentPath);
+                        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16));
+                    }
                 }
-
             }
         }
     };
 
-    private void redrawPolyLine() {
-        mGoogleMap.clear();
-
-        PolylineOptions options = new PolylineOptions().width(10).color(Color.CYAN).geodesic(true);
-        for (int i = 0; i < currentPath.getSize(); i++){
-            LatLng point = new LatLng(currentPath.getLocationList().get(i).getLatitude(),
-                    currentPath.getLocationList().get(i).getLongitude());
-            options.add(point);
-        }
-        mGoogleMap.addPolyline(options);
-
-        MarkerOptions startMaker = new MarkerOptions();
-        Location startPoint = currentPath.getStartPoint();
-        startMaker.position(new LatLng(startPoint.getLatitude(), startPoint.getLongitude()));
-        startMaker.title("Start");
-        startMaker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-        mGoogleMap.addMarker(startMaker);
-    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //mPageViewModel = ViewModelProviders.of(requireActivity()).get(InfoViewModel.class);
         mPageViewModel = new ViewModelProvider(requireActivity()).get(InfoViewModel.class);
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
     }
 
     @Nullable
@@ -166,11 +183,16 @@ public class MapsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         startBtn = getView().findViewById(R.id.startBtn);
         saveBtn = getView().findViewById(R.id.saveBtn);
+        clearBtn = getView().findViewById(R.id.clearBtn);
+        shareBtn = getView().findViewById(R.id.shareBtn);
 
         startBtn.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View view) {
             if (!recording) {
+                mGoogleMap.clear();
+                //currentPath.clearPath();
+                currentPath = new TravelPath();
                 Snackbar.make(view, "Start Recording Path", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 //startBtn.getDrawable().mutate().setTint(ContextCompat.getColor(getContext(), R.color.red));
@@ -178,37 +200,32 @@ public class MapsFragment extends Fragment {
                 startBtn.setTextColor(Color.parseColor("#FFFFFFFF"));
                 startBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#C62828")));
                 saveBtn.setVisibility(View.INVISIBLE);
+                clearBtn.setVisibility(View.INVISIBLE);
+                shareBtn.setVisibility(View.INVISIBLE);
                 recording = true;
-                currentPath.clearPath();
                 //String time = df.format(new Date());
                 //Toast.makeText(getContext(),time,Toast.LENGTH_LONG).show();
                 currentPath.setStartTime(df.format(new Date()));
-                mPageViewModel.setDisplayPath(currentPath);
-                mGoogleMap.clear();
+                if(mNewLocation != null)
+                    currentPath.addLocation(mNewLocation);
 
-            }
-            else {
+
+            } else {
+                recording = false;
                 Snackbar.make(view, "Recording Stopped", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+                clearBtn.setVisibility(View.VISIBLE);
                 //startBtn.getDrawable().mutate().setTint(ContextCompat.getColor(getContext(), R.color.gray));
                 startBtn.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFFFFFFF")));
                 startBtn.setText("  START");
                 startBtn.setTextColor(Color.parseColor("#FF000000"));
                 saveBtn.setVisibility(View.VISIBLE);
+                shareBtn.setVisibility(View.VISIBLE);
                 currentPath.setEndTime(df.format(new Date()));
-                Location endPoint = currentPath.getEndPoint();
-                mPageViewModel.setDisplayPath(currentPath);
-
-                if(endPoint != null) {
-                    MarkerOptions endMaker = new MarkerOptions();
-                    endMaker.position(new LatLng(endPoint.getLatitude(), endPoint.getLongitude()));
-                    endMaker.title("End");
-                    endMaker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                    mGoogleMap.addMarker(endMaker);
-                }
-
-                recording = false;
+                currentPath.setEndPoint();
             }
+            mPageViewModel.setDisplayPath(currentPath);
+            redrawPolyLine(currentPath);
         }
 
         });
@@ -218,19 +235,26 @@ public class MapsFragment extends Fragment {
             public void onClick(View v) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                 builder.setTitle("Enter the path name");
-                // I'm using fragment here so I'm using getView() to provide ViewGroup
-                // but you can provide here any other instance of ViewGroup from your Fragment / Activity
                 View viewInflated = LayoutInflater.from(getContext()).inflate(R.layout.dialog_input_name, (ViewGroup) getView(), false);
                 // Set up the input
-                final EditText input = (EditText) viewInflated.findViewById(R.id.input);
+                final EditText input = viewInflated.findViewById(R.id.input);
                 builder.setView(viewInflated);
-
                 // Set up the buttons
                 builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
                         m_Text = input.getText().toString();
+                        currentPath.setSavedName(m_Text);
+                        saveCurrentPath();
+                        //Toast.makeText(getContext(),m_Text,Toast.LENGTH_SHORT).show();
+                        Bundle bundle = new Bundle();
+                        bundle.putParcelable("PathToSave", currentPath);
+                        //SavedPathFragment savedPathFragment = (SavedPathFragment) getParentFragmentManager().findFragmentById(R.id.list);
+                        //savedPathFragment.setArguments(bundle);
+                        getParentFragmentManager().setFragmentResult("save", bundle);
+                        EventBus.getDefault().post(new SavePathEvent(currentPath));
+                        saveBtn.setVisibility(View.INVISIBLE);
+                        dialog.dismiss();
                     }
                 });
                 builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -241,6 +265,63 @@ public class MapsFragment extends Fragment {
                 });
 
                 builder.show();
+            }
+        });
+
+        clearBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mGoogleMap.clear();
+                clearBtn.setVisibility(View.INVISIBLE);
+                if(displaying){
+                    displaying = false;
+                    redrawPolyLine(currentPath);
+                    startBtn.setVisibility(View.VISIBLE);
+                    if(!recording){
+                        if(currentPath.ended()){
+                            saveBtn.setVisibility(View.VISIBLE);
+                            shareBtn.setVisibility(View.VISIBLE);
+                            redrawPolyLine(currentPath);
+                        }
+                        else
+                            shareBtn.setVisibility(View.INVISIBLE);
+                    }
+                    else {
+                        redrawPolyLine(currentPath);
+                        shareBtn.setVisibility(View.INVISIBLE);
+                    }
+                }
+                else{
+                    if(!recording && currentPath.ended()){
+                        currentPath.clearPath();
+                        saveBtn.setVisibility(View.INVISIBLE);
+                        shareBtn.setVisibility(View.INVISIBLE);
+                    }
+                }
+                mPageViewModel.setDisplayPath(currentPath);
+            }
+        });
+
+        shareBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String message;
+                if(displaying) {
+                    message = "I have travelled for " + displayPath.getTravelledDistance() + "m!";
+                }
+                else{
+                    message = "I have travelled for " + currentPath.getTravelledDistance() + "m!";
+                }
+                try {
+
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setType("vnd.android-dir/mms-sms");
+                    intent.putExtra("sms_body", message);
+                    intent.setData(Uri.parse("sms:"));
+                    startActivity(intent);
+                } catch (android.content.ActivityNotFoundException e) {
+                    Log.d("Error" , "Error");
+                }
             }
         });
 
@@ -321,5 +402,85 @@ public class MapsFragment extends Fragment {
                 }
             }
         }
+    }
+
+    private void saveCurrentPath(){
+        Gson gson = new Gson();
+        String json = gson.toJson(currentPath);
+        Context context = getActivity();
+
+        String timeStamp = timeStampFormat.format(new Date());
+        currentPath.setSavedFileName(currentPath.getSavedName() + timeStamp + ".json");
+
+        String path = context.getFilesDir() + "/SavedPath/";
+        Log.i("PATH", path);
+        File dir = new File(path);
+        if (!dir.exists()) {
+            dir.mkdirs();
+            //Toast.makeText(getActivity().getBaseContext(), "Directory DOE, making one", Toast.LENGTH_LONG).show();
+        }
+        try {
+            Writer output = null;
+            File file = new File(dir.getAbsolutePath() + "/" + currentPath.getSavedFileName());
+            //Log.i("FULL PATH", dir.getAbsolutePath() + "/" + currentPath.getSavedName() + timeStamp+ ".json");
+
+            output = new BufferedWriter(new FileWriter(file.getAbsoluteFile()));
+            output.write(json);
+            output.close();
+            Toast.makeText(context, "Path saved", Toast.LENGTH_LONG).show();
+
+        } catch (Exception e) {
+            Toast.makeText(getActivity().getBaseContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void redrawPolyLine(TravelPath path) {
+        mGoogleMap.clear();
+
+        PolylineOptions options = new PolylineOptions().width(10).color(Color.CYAN).geodesic(true);
+        for (int i = 0; i < path.getSize(); i++){
+            LatLng point = new LatLng(path.getLocationList().get(i).getLatitude(),
+                    path.getLocationList().get(i).getLongitude());
+            options.add(point);
+        }
+        mGoogleMap.addPolyline(options);
+
+        if(path.getStartPoint() != null) {
+            MarkerOptions startMaker = new MarkerOptions();
+            Location startPoint = path.getStartPoint();
+            startMaker.position(new LatLng(startPoint.getLatitude(), startPoint.getLongitude()));
+            startMaker.title("Start");
+            startMaker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+            mGoogleMap.addMarker(startMaker);
+        }
+
+
+        if (path.getEndPoint() != null) {
+            Location endPoint = path.getEndPoint();
+            MarkerOptions endMaker = new MarkerOptions();
+            endMaker.position(new LatLng(endPoint.getLatitude(), endPoint.getLongitude()));
+            endMaker.title("End");
+            endMaker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+            mGoogleMap.addMarker(endMaker);
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onDisplayPath(DisplayPathEvent received){
+        displayPath = received.getPathToDisplay();
+        Log.i("DisplayPath", valueOf(displayPath.getStartPoint().getLatitude()));
+
+        mGoogleMap.clear();
+        redrawPolyLine(displayPath);
+        mPageViewModel.setDisplayPath(displayPath);
+        Toast.makeText(getContext(), "Path Loaded", Toast.LENGTH_SHORT).show();
+        displaying = true;
+        startBtn.setVisibility(View.INVISIBLE);
+        saveBtn.setVisibility(View.INVISIBLE);
+        clearBtn.setVisibility(View.VISIBLE);
+        shareBtn.setVisibility(View.VISIBLE);
+        LatLng latLng = new LatLng(displayPath.getStartPoint().getLatitude(), displayPath.getStartPoint().getLongitude());
+        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,16));
+        //adapter.notifyDataSetChanged();
     }
 }
