@@ -210,7 +210,8 @@ public class MapsFragment extends Fragment {
                     currentPath.addLocation(mNewLocation);
 
 
-            } else {
+            }
+            else {
                 recording = false;
                 Snackbar.make(view, "Recording Stopped", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
@@ -293,6 +294,7 @@ public class MapsFragment extends Fragment {
                 }
                 else{
                     if(!recording && currentPath.ended()){
+                        currentPath = new TravelPath();
                         currentPath.clearPath();
                         saveBtn.setVisibility(View.INVISIBLE);
                         shareBtn.setVisibility(View.INVISIBLE);
@@ -413,7 +415,7 @@ public class MapsFragment extends Fragment {
         currentPath.setSavedFileName(currentPath.getSavedName() + timeStamp + ".json");
 
         String path = context.getFilesDir() + "/SavedPath/";
-        Log.i("PATH", path);
+        //Log.i("PATH", path);
         File dir = new File(path);
         if (!dir.exists()) {
             dir.mkdirs();
@@ -422,16 +424,17 @@ public class MapsFragment extends Fragment {
         try {
             Writer output = null;
             File file = new File(dir.getAbsolutePath() + "/" + currentPath.getSavedFileName());
-            //Log.i("FULL PATH", dir.getAbsolutePath() + "/" + currentPath.getSavedName() + timeStamp+ ".json");
+            Log.i("FULL PATH", dir.getAbsolutePath() + "/" + currentPath.getSavedFileName());
 
             output = new BufferedWriter(new FileWriter(file.getAbsoluteFile()));
             output.write(json);
             output.close();
-            Toast.makeText(context, "Path saved", Toast.LENGTH_LONG).show();
+            //Toast.makeText(context, "Path saved", Toast.LENGTH_SHORT).show();
 
         } catch (Exception e) {
             Toast.makeText(getActivity().getBaseContext(), e.getMessage(), Toast.LENGTH_LONG).show();
         }
+        //currentPath = new TravelPath();
     }
 
     private void redrawPolyLine(TravelPath path) {
