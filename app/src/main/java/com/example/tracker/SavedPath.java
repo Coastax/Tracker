@@ -70,11 +70,13 @@ public class SavedPath {
 
             for (int i = 0; i < files.length; i++)
             {
-                //Log.d("Files", "FileName:" + files[i].getName());
+                Log.d("Files", "FileName:" + files[i].getName());
                 try {
                     BufferedReader bufferedReader = new BufferedReader(new FileReader(files[i].getAbsolutePath()));
                     TravelPath pathToLoad = gson.fromJson(bufferedReader, TravelPath.class);
-                    //Log.d("Loaded Path", pathToLoad.getSavedName());
+                    Log.d("Loaded Path", pathToLoad.getSavedFileName());
+                    pathToLoad.setSavedFileName(files[i].getName());
+                    Log.d("Loaded Path", pathToLoad.getSavedFileName());
                     SavedPath.addItem(pathToLoad);
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
