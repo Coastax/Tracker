@@ -190,9 +190,11 @@ public class TravelPath implements Serializable, Parcelable {
         dest.writeInt(this.size);
         dest.writeFloat(this.travelledDistance);
         dest.writeString(this.savedName);
+        dest.writeString(this.savedFileName);
         dest.writeFloat(this.speed);
         dest.writeString(this.startTime);
         dest.writeString(this.endTime);
+        dest.writeFloat(this.elapsedTime);
         //dest.writeParcelable(this.mContext, flags);
     }
 
@@ -204,9 +206,11 @@ public class TravelPath implements Serializable, Parcelable {
         this.size = in.readInt();
         this.travelledDistance = in.readFloat();
         this.savedName = in.readString();
+        this.savedFileName = in.readString();
         this.speed = in.readFloat();
         this.startTime = in.readString();
         this.endTime = in.readString();
+        this.elapsedTime = in.readFloat();
         //this.mContext = in.readParcelable(Context.class.getClassLoader());
     }
 
